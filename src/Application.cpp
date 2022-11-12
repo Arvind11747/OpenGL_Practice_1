@@ -19,8 +19,20 @@
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtx/transform.hpp"
+#include "glm/gtx/rotate_vector.hpp"
+
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
 
 float width=980.0f, height=540.0f;
+
+
+
+glm::mat4 SetMVP(glm::mat4 model, glm::mat4 view, glm::mat4 projection) 
+{
+    return projection * view * model;
+}
 
 int main() {
   GLFWwindow* window;
@@ -46,7 +58,8 @@ int main() {
 
   glfwSwapInterval(1);
 
-  if (glewInit() != GLEW_OK) {
+  if (glewInit() != GLEW_OK) 
+  {
     std::cout << "Error: Rendering context not created" << std::endl;
   }
 
@@ -54,10 +67,10 @@ int main() {
 
   {
     float vertices[] = {
-    /*0*/ /*Pc:*/ 100.0f, 100.0f, /*Tc:*/ 1.0f, 1.0f,
-    /*1*/ /*Pc:*/ 100.0f, 200.0f, /*Tc:*/ 1.0f, 0.0f,
-    /*2*/ /*Pc:*/ 200.0f, 200.0f, /*Tc:*/ 0.0f, 0.0f,
-    /*3*/ /*Pc:*/ 200.0f, 100.0f, /*Tc:*/ 0.0f, 1.0f 
+    /*0*/ /*Pc:*/ -50.0f, -50.0f, /*Tc:*/ 1.0f, 1.0f,
+    /*1*/ /*Pc:*/ -50.0f,  50.0f, /*Tc:*/ 1.0f, 0.0f,
+    /*2*/ /*Pc:*/  50.0f,  50.0f, /*Tc:*/ 0.0f, 0.0f,
+    /*3*/ /*Pc:*/  50.0f, -50.0f, /*Tc:*/ 0.0f, 1.0f 
     };   
 
 
@@ -66,39 +79,6 @@ int main() {
         2, 3, 0
     };
 
-    /*Vertex Array Object (Abstracted to class VertexArray)*/
-    //unsigned int vao;
-    //GLCall(glGenVertexArrays(1, &vao));
-    //GLCall(glBindVertexArray(vao));
-
-    /* Buffer Example code (Abstacted to class VertexBuffer)
-    unsigned int buffer;
-    //Generate Buffer
-    GLCall(glGenBuffers(1, &buffer));
-    //Bind that Buffer to a buffer binding object
-    GLCall(glBindBuffer(GL_ARRAY_BUFFER, buffer));
-    //Creates a new data store for the buffer object currently bound to target
-    (GL_ARRAY_BUFFER). GLCall(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices),
-    vertices, GL_STATIC_DRAW));
-    */
-    
-
-    /*//Example Code (Abstracted to class VertexArray)
-    GLCall(glEnableVertexAttribArray(0));
-    GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0));
-    */
-
-    /*Indices Object Buffer Example code (Abstacted to class IndexBuffer)
-    unsigned int ibo;
-    //Generate Buffer
-    GLCall(glGenBuffers(1, &ibo));
-    //Bind that Buffer to a buffer binding object
-    GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
-    //Creates a new data store for the buffer object currently bound to target
-    (GL_ELEMENT_ARRAY_BUFFER). GLCall(glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-    sizeof(indices), indices, GL_STATIC_DRAW));
-    */
-    
     VertexArray va;
     VertexBuffer vb(4 * 4 * sizeof(float), vertices);
     VertexBufferLayout layout;
@@ -106,39 +86,27 @@ int main() {
     layout.Push<float>(2); // Tc
     va.AddBuffer(vb, layout);
     IndexBuffer ib(6, indices);
-
-    Renderer renderer;
-
-
-    /* Shader (Abstracted into class Shader)
-    ShaderProgramSource source = ParseShader("res/shaders/Basic.shader");
-    // std::cout << "Vertex Shader" << std::endl;
-    // std::cout << source.VertexSource << std::endl;
-    // std::cout << "Fragment Shader" << std::endl;
-    // std::cout << source.FragmentSource << std::endl;
-    //Creating Shader by parsing the shader from different file
-    unsigned int shader = CreateShader(source.VertexSource, source.FragmentSource);
-    */
-    /*Installs the program object specified by program as part of current
-     * rendering state. */
-    //GLCall(glUseProgram(shader));
-    /*Uniform to control Color*/
-    // Get the location of the uniform from the shader.
-    //GLCall(int color_Location = glGetUniformLocation(shader, "u_color"));
-    // Check to see if the uniform is present in the shader or not.;
-    //ASSERT(color_Location != -1);
-    // Send the location and the value through here.
-    //GLCall(glUniform4f(color_Location, 0.5f, 0.2f, 0.8f, 1.0f));
-
+    
     Shader shader("res/shaders/Basic.shader");
     shader.Bind();
-
-    //shader.SetUniform4f("u_Color", 0.5f, 0.2f, 0.8f, 1.0f);
-
 
     Texture texture("res/tex/tex1.png", false);
     texture.Bind();
     shader.SetUniform1i("u_Texture", 0);
+
+    Renderer renderer;
+
+    //ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsClassic();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init((char*)glGetString(GL_NUM_SHADING_LANGUAGE_VERSIONS));
 
 
     /*Clear bindings.*/
@@ -147,42 +115,92 @@ int main() {
     ib.Unbind();
     shader.Unbind();
 
+    glm::vec3 translationA(0, 0, 0);
+    glm::vec3 translationB(0, 0, 0);
+    glm::vec3 camTranslation(0, 0, 0);
+
+    glm::vec3 rotationAxisX(1, 0, 0);
+    glm::vec3 rotationAxisY(0, 1, 0);
+    glm::vec3 rotationAxisZ(0, 0, 1);
+
+    float angleX=0.0f;
+    float angleY=0.0f;
+    float angleZ=45.0f;
+
     float moveCam=0;
     float i = 0.05;
     while (!glfwWindowShouldClose(window)) 
     {
-      glm::mat4 proj = glm::ortho(0.0f, width, 0.0f, height, -1.0f, 1.0f);
-      glm::mat4 view = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0));
-      glm::mat4 modelTranslate = glm::translate(glm::mat4(1.0f), glm::vec3(200, 100, 0));
-      glm::vec3 rotationAxis(0, 0, 1);
-      glm::mat4 modelRotation = glm::rotate(45.0f, rotationAxis);
-      glm::mat4 modelScale = glm::scale(glm::vec3(2, 2, 1));
+        renderer.Clear();
 
-      glm::mat4 model = modelTranslate * modelRotation * modelScale;
+        // Start the Dear ImGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
 
-      glm::mat4 mvp = proj * view * model;
-      /*Render here*/
-      /*(Abstracted to Renderer class)*/
-      //GLCall(glClear(GL_COLOR_BUFFER_BIT));
-      renderer.Clear();
-      /*Using Vertices as a method to draw*/
-      // glDrawArrays(GL_TRIANGLES, 0, 6);
+        shader.Bind();
+        {
+            glm::mat4 modelTranslate = glm::translate(glm::mat4(1.0f), translationA);
+            glm::mat4 modelRotation = glm::rotate(angleZ, rotationAxisZ); // Rotate on Z axis
+            glm::mat4 modelScale = glm::scale(glm::vec3(2, 2, 1));
 
-      /*Shader bind.*/
-      //GLCall(glUseProgram(shader));
-      //GLCall(glUniform4f(color_Location, r, g, b, 1.0f));
-      shader.Bind();
-      shader.SetUniformMat4f("u_MVP", mvp);
-      //shader.SetUniform4f("u_Color", 1.0, 0.0, 1.0, 1.0f);
-      /*Vertex Array bind.*/
-      //GLCall(glBindVertexArray(vao));
-      // GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
-      renderer.Draw(va,ib,shader);
+            glm::mat4 model = modelTranslate * modelRotation * modelScale;
+            glm::mat4 view = glm::translate(glm::mat4(1.0f), camTranslation);
+            glm::mat4 proj = glm::ortho(0.0f, width, 0.0f, height, -1.0f, 1.0f);
 
-      /*Using Indices as a method to draw*/
-      /*//(Abstracted to Renderer class)
-      va.Bind();
-      GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));*/
+            glm::mat4 mvp = SetMVP(model, view, proj);
+
+            shader.SetUniformMat4f("u_MVP", mvp);
+            renderer.Draw(va,ib,shader);
+        } 
+        {
+            glm::mat4 modelTranslate = glm::translate(glm::mat4(1.0f), translationB);
+            glm::mat4 modelRotation = glm::rotate(angleZ, rotationAxisZ); // Rotate on Z axis
+            glm::mat4 modelScale = glm::scale(glm::vec3(2, 2, 1));
+
+            glm::mat4 model = modelTranslate * modelRotation * modelScale;
+            glm::mat4 view = glm::translate(glm::mat4(1.0f), camTranslation);
+            glm::mat4 proj = glm::ortho(0.0f, width, 0.0f, height, -1.0f, 1.0f);
+
+            glm::mat4 mvp = SetMVP(model, view, proj);
+
+            shader.SetUniformMat4f("u_MVP", mvp);
+            renderer.Draw(va,ib,shader);
+        }
+
+        {
+            ImGui::Begin("Debuging Performance");
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            ImGui::End();
+        }
+
+        {
+            ImGui::Begin("Object Control");
+
+            
+            ImGui::Text("Object translate 1");
+            ImGui::SliderFloat3("translate A", &translationA.x, 0.0f, 1000);            
+            ImGui::NewLine();
+            ImGui::Text("Object translate 2");
+            ImGui::SliderFloat3("translate B", &translationB.x, 0.0f, 1000);
+            ImGui::NewLine();
+            ImGui::Text("Angle");
+            ImGui::SliderAngle("Angle", &angleZ);
+
+            
+            ImGui::End();
+        } 
+        {
+            ImGui::Begin("Camera Control");
+
+            ImGui::Text("Camera translate");
+            ImGui::SliderFloat3("cam", &camTranslation.x, 0.0f, 1000);
+            ImGui::End();
+        }
+
+        //ImGui Rendering
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
       /*Swap front and back buffers */
       glfwSwapBuffers(window);
@@ -195,6 +213,11 @@ int main() {
 
     //GLCall(glDeleteProgram(shader));
   }
+  ImGui_ImplOpenGL3_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
+  ImGui::DestroyContext();
+  
+  glfwDestroyWindow(window);
   glfwTerminate();
 
   return 0;
