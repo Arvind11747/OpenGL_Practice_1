@@ -75,6 +75,15 @@
     <ClCompile Include="src\tests\TestShader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\tests\TestMotionBlur.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Model.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Dependencies\glew-2.1.0\doc\advanced.html" />
@@ -88,6 +97,10 @@
     <None Include="Dependencies\glew-2.1.0\doc\log.html" />
     <None Include="Dependencies\glew-2.1.0\doc\wglew.html" />
     <None Include="res\shaders\Basic.shader" />
+    <None Include="res\shaders\lighting.shader" />
+    <None Include="res\shaders\light.shader" />
+    <None Include="res\shaders\car1.shader" />
+    <None Include="E:\OpenGL\res\models\car.fbx" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Dependencies\glew-2.1.0\include\GL\eglew.h">
@@ -172,6 +185,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\tests\TestShader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tests\TestMotionBlur.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

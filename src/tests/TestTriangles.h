@@ -18,7 +18,7 @@ namespace Tests
 		void OnRender() override;
 		void OnImGuiRender(std::string windowName) override;
 
-		glm::mat4 SetMVP(glm::mat4 model, glm::mat4 view, glm::mat4 projection);
+		static glm::mat4 SetMVP(glm::mat4 model, glm::mat4 view, glm::mat4 projection);
 	private:
 
 		float m_Width, m_Height, m_AngleX, m_AngleY, m_AngleZ;

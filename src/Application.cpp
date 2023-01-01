@@ -33,6 +33,8 @@
 //Tests
 #include "tests/TestClearColor.h"
 #include "tests/TestTriangles.h"
+#include "tests/TestShader.h"
+
 
 float width = 980.0f, height = 540.0f;
 
@@ -70,8 +72,10 @@ int main() {
   std::cout << glGetString(GL_VERSION) << std::endl;
 
   {
-    //Tests::TestClearColor testClearColor;
-    Tests::TestTriangles testTriangles;
+    Tests::TestClearColor testClearColor;
+    //Tests::TestTriangles testTriangles;
+      //Tests::TestShader testShaders;
+      //Tests::testClearColorBlur testClearColor;
 
 
     //Renderer renderer;
@@ -99,13 +103,13 @@ int main() {
     while (!glfwWindowShouldClose(window)) 
     {
         /*renderer.Clear();*/
-        testTriangles.OnUpdate(0.0f);
-        testTriangles.OnRender();
+        testClearColor.OnUpdate(0.0f);
+        testClearColor.OnRender();
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-        testTriangles.OnImGuiRender("TestColor");
+        testClearColor.OnImGuiRender("TestColor");
         //GLCall(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
   
         //ImGui Rendering
@@ -120,7 +124,6 @@ int main() {
 
 
     }
-
     //GLCall(glDeleteProgram(shader));
   }
   ImGui_ImplOpenGL3_Shutdown();
