@@ -18,7 +18,7 @@ void main()
 }
 
 #shader fragment
-#version 330 core
+#version 320 core
 
 struct Material
 {
